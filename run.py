@@ -1,7 +1,4 @@
-import matplotlib
-matplotlib.use('TkAgg')
-import matplotlib.pyplot as plt
-from skimage.io import imread, imshow
+from skimage.io import imread
 from image_transfer_learning.functions import make_square
 from skimage.transform import resize
 import os
@@ -9,56 +6,52 @@ import tensorflow as tf
 import tensorflow_hub as hub
 import numpy as np
 
-image_path = "./dogImages/train/001.Affenpinscher/Affenpinscher_00001.jpg"
-image = imread(image_path)
-image = make_square(image)
+# TODO - Refactor into separate functions to build graph and to transform images
+
+# Convert the images to vectors and to a numpy array
+feature_vectors = []
+labels = []
 
 with tf.Graph().as_default():
 
-    module = hub.Module("https://tfhub.dev/google/imagenet/inception_v3/feature_vector/1")
-    height, width = hub.get_expected_image_size(module)
+    mod = hub.Module("https://tfhub.dev/google/imagenet/inception_v3/feature_vector/1")
+    height, width = hub.get_expected_image_size(mod)
     batch_size = 1
     images = tf.placeholder(tf.float32, shape=[batch_size, height, width, 3], name='Input_images')
 
-    features = module(images)  # Features with shape [batch_size, num_features].
+    features = mod(images)  # Features with shape [batch_size, num_features].
 
     with tf.Session() as sess:
 
         sess.run(tf.global_variables_initializer())
         sess.run(tf.tables_initializer())
 
-        input_image = resize(image, (height, width), anti_aliasing=True)
-        input_image = np.expand_dims(input_image, axis=0)
+        for dataset in ['train', 'test', 'valid']:
 
-        feature_vector = sess.run(features, feed_dict={images: input_image})
+            for category_dir in os.scandir("./images/" + dataset):
 
-        debug = 0
+                label = os.path.basename(os.path.normpath(category_dir))
 
+                for image_path in os.scandir(category_dir):
 
+                    print('Converting image: ' + image_path.name)
+                    image = imread(os.path.abspath(image_path))
+                    image = make_square(image)
+                    image = resize(image, (height, width), anti_aliasing=True)
+                    image = np.expand_dims(image, axis=0)
 
+                    vec = sess.run(features, feed_dict={images: image})
 
-"""
-images = []
-labels = []
+                    feature_vectors.append(vec)
+                    labels.append(label)
 
-m = hub.Module("path/to/a/module_dir")
+            feature_vectors_array = np.concatenate(feature_vectors, axis=0)
+            labels_array = np.array(labels)
 
-#for category_dir in os.scandir("./dogImages/train"):
+            # save the arrays as a pickle file here
+            feature_vectors_save_path = "./feature_vectors/" + dataset
+            if not os.path.exists(feature_vectors_save_path):
+                os.makedirs(feature_vectors_save_path)
 
-#    label = os.path.basename(os.path.normpath(category_dir))
-
-for image_path in os.scandir(category_dir):
-
-    images.append(make_square(imread(image_path.path)))
-
-
-
-
-image_path = "./dogImages/train/001.Affenpinscher/Affenpinscher_00001.jpg"
-img = imread(image_path)
-image = make_square(img)
-
-imshow(image)
-plt.show()
-
-"""
+            np.savez(feature_vectors_save_path + '/vectors.npz', feature_vectors_array=feature_vectors_array,
+                     labels_array=labels_array)

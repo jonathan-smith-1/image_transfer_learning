@@ -1,6 +1,5 @@
 
 def make_square(img):
-
     """
     Trim an image to make it square by keeping the centre of the original image.
 
@@ -11,7 +10,6 @@ def make_square(img):
         Numpy array of trimmed image.
 
     """
-
     height, width, channels = img.shape
 
     if height >= width:
@@ -25,7 +23,3 @@ def make_square(img):
         w_min = int(width/2 - height/2)
 
         return img[:, w_min:w_max, :].copy()
-
-
-
-
