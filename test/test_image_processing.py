@@ -1,12 +1,5 @@
-import sys
-import os
-
-path = os.path.abspath('../image_transfer_learning')
-if path not in sys.path:
-    sys.path.append(path)
-
-from image_transfer_learning.image_processing import make_square
 import numpy as np
+from image_transfer_learning.image_processing import make_square
 
 
 def test_odd_height_odd_width():

@@ -1,10 +1,16 @@
 
-from image_transfer_learning.functions import convert_images
+from image_transfer_learning.image_processing import convert_images
+from image_transfer_learning.network import Network
 
 
-# TODO - Refactor into separate functions to build graph and to transform images
 # TODO - Make filepaths a bit more robust - currently it assumes the code is run for a certain directory
 
 convert_images()
+
+
+net = Network()
+
+# TODO - add training etc. of network here
+
 
 
