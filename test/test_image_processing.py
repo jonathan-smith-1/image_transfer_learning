@@ -1,4 +1,5 @@
 import numpy as np
+
 from image_transfer_learning.image_processing import make_square
 
 
