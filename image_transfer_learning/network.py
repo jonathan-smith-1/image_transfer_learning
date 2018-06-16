@@ -13,6 +13,7 @@ class Network:
         # TODO - Figure out which graph
         self.input = tf.placeholder(tf.float32, shape=(None, in_dims))
         logits = tf.layers.dense(self.input, num_classes)
+        self.output = tf.argmax(logits)
 
         self.labels = tf.placeholder(tf.int32, shape=None)
 
@@ -51,10 +52,23 @@ class Network:
 
                     print('Loss: {:.2f}'.format(loss[0]))
 
+    def predict(self, feature_vectors, int_to_lab):
 
+        """
 
-    def predict(self):
-        pass
+        Args:
+            feature_vectors: 2D numpy array, any number of rows
+
+        Returns:
+
+        """
+
+        with tf.Session() as sess:
+
+            pred = sess.run(self.output, feed_dict={self.input:
+                                                        feature_vectors})
+
+            return int_to_lab[pred]
 
     def save(self):
         pass

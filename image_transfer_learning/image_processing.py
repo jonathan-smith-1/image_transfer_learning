@@ -49,6 +49,7 @@ def convert_images(images_path, feature_vectors_path, lab_to_int):
         Nothing
 
     """
+    print('Converting images from: ' + images_path)
 
     # Convert the images to vectors and to a numpy array
     feature_vectors = []
@@ -73,7 +74,7 @@ def convert_images(images_path, feature_vectors_path, lab_to_int):
                 label = os.path.basename(os.path.normpath(category_dir))
 
                 for image_path in os.scandir(category_dir):
-                    print('Converting image: ' + image_path.name)
+                    print(image_path.name)
                     image = imread(os.path.abspath(image_path))
                     image = make_square(image)
 
@@ -89,10 +90,6 @@ def convert_images(images_path, feature_vectors_path, lab_to_int):
 
             feature_vectors_array = np.concatenate(feature_vectors, axis=0)
             labels_array = np.array(labels)
-
-            # save the arrays as a pickle file here
-            if not os.path.exists(feature_vectors_path):
-                os.makedirs(feature_vectors_path)
 
             np.savez(feature_vectors_path,
                      feature_vectors_array=feature_vectors_array,
