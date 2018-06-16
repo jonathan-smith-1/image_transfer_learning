@@ -6,6 +6,10 @@ import tensorflow_hub as hub
 import numpy as np
 
 
+def get_data_shape():
+    return 1, 2
+
+
 def make_square(img):
     """
     Trim an image to make it square by keeping the centre of the original image.
