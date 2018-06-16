@@ -6,10 +6,6 @@ import tensorflow_hub as hub
 import numpy as np
 
 
-def get_data_shape():
-    return 1, 2
-
-
 def make_square(img):
     """
     Trim an image to make it square by keeping the centre of the original image.
@@ -36,7 +32,23 @@ def make_square(img):
         return img[:, w_min:w_max, :].copy()
 
 
-def convert_images():
+def convert_images(images_path, feature_vectors_path, lab_to_int):
+    """
+    Convert images into feature vectors.
+
+    Expecting a file structure...
+
+    Saves them in this format...
+
+    Args:
+        images_path (string): Filepath to folder
+        feature_vectors_path (string): Filepath to folder containing feature vectors.
+        lab_to_int (dict): Mapping from labels to integers
+
+    Returns:
+        Nothing
+
+    """
 
     # Convert the images to vectors and to a numpy array
     feature_vectors = []
@@ -56,33 +68,66 @@ def convert_images():
             sess.run(tf.global_variables_initializer())
             sess.run(tf.tables_initializer())
 
-            for dataset in ['train', 'test', 'valid']:
+            for category_dir in os.scandir(images_path):
 
-                for category_dir in os.scandir("./data/images/" + dataset):
+                label = os.path.basename(os.path.normpath(category_dir))
 
-                    label = os.path.basename(os.path.normpath(category_dir))
+                for image_path in os.scandir(category_dir):
+                    print('Converting image: ' + image_path.name)
+                    image = imread(os.path.abspath(image_path))
+                    image = make_square(image)
 
-                    for image_path in os.scandir(category_dir):
-                        print('Converting image: ' + image_path.name)
-                        image = imread(os.path.abspath(image_path))
-                        image = make_square(image)
+                    # Constant argument prevents deprication warning
+                    image = resize(image, (height, width), anti_aliasing=True,
+                                   mode='constant')
+                    image = np.expand_dims(image, axis=0)
 
-                        # Constant argument prevents deprication warning
-                        image = resize(image, (height, width), anti_aliasing=True, mode='constant')
-                        image = np.expand_dims(image, axis=0)
+                    vec = sess.run(features, feed_dict={images: image})
 
-                        vec = sess.run(features, feed_dict={images: image})
+                    feature_vectors.append(vec)
+                    labels.append(lab_to_int[label])
 
-                        feature_vectors.append(vec)
-                        labels.append(label)
+            feature_vectors_array = np.concatenate(feature_vectors, axis=0)
+            labels_array = np.array(labels)
 
-                feature_vectors_array = np.concatenate(feature_vectors, axis=0)
-                labels_array = np.array(labels)
+            # save the arrays as a pickle file here
+            if not os.path.exists(feature_vectors_path):
+                os.makedirs(feature_vectors_path)
 
-                # save the arrays as a pickle file here
-                feature_vectors_save_path = "./data/feature_vectors/" + dataset
-                if not os.path.exists(feature_vectors_save_path):
-                    os.makedirs(feature_vectors_save_path)
+            np.savez(feature_vectors_path,
+                     feature_vectors_array=feature_vectors_array,
+                     labels_array=labels_array)
 
-                np.savez(feature_vectors_save_path + '/vectors.npz', feature_vectors_array=feature_vectors_array,
-                         labels_array=labels_array)
+
+def get_feature_vector_size(feature_vector_path):
+
+    data = np.load(feature_vector_path)
+
+    return data['feature_vectors_array'].shape[1]
+
+
+def get_num_classes(feature_vector_path):
+
+    data = np.load(feature_vector_path)
+
+    unique_labels = np.unique(data['labels_array'])
+    return unique_labels.size
+
+
+def enumerate_labels(images_path):
+
+    labels = set()
+
+    for category_dir in os.scandir(images_path):
+
+        labels.add(os.path.basename(os.path.normpath(category_dir)))
+
+    int_to_lab = dict(enumerate(sorted(labels)))
+    lab_to_int = {v: k for k, v in int_to_lab.items()}
+
+    return int_to_lab, lab_to_int
+
+
+
+
+
