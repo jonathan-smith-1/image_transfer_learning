@@ -4,6 +4,7 @@ import os
 import tensorflow as tf
 import tensorflow_hub as hub
 import numpy as np
+import pickle
 
 
 def make_square(img):
@@ -56,7 +57,7 @@ def convert_images(images_path, feature_vectors_path, lab_to_int=None):
     labels = []
 
     if not lab_to_int:
-        int_to_lab, lab_to_int = enumerate_labels(images_path)
+        _, lab_to_int = enumerate_labels(images_path)
 
     with tf.Graph().as_default():
 
@@ -94,23 +95,28 @@ def convert_images(images_path, feature_vectors_path, lab_to_int=None):
             feature_vectors_array = np.concatenate(feature_vectors, axis=0)
             labels_array = np.array(labels)
 
-            np.savez(feature_vectors_path,
-                     feature_vectors_array=feature_vectors_array,
-                     labels_array=labels_array)
+            data = {'feature_vectors_array': feature_vectors_array,
+                    'labels_array': labels_array,
+                    'lab_to_int': lab_to_int}
+
+            with open(feature_vectors_path, 'wb') as f:
+                pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
 
     return lab_to_int
 
 
 def get_feature_vector_size(feature_vector_path):
 
-    data = np.load(feature_vector_path)
+    with open(feature_vector_path, 'rb') as f:
+        data = pickle.load(f)
 
     return data['feature_vectors_array'].shape[1]
 
 
 def get_num_classes(feature_vector_path):
 
-    data = np.load(feature_vector_path)
+    with open(feature_vector_path, 'rb') as f:
+        data = pickle.load(f)
 
     unique_labels = np.unique(data['labels_array'])
     return unique_labels.size

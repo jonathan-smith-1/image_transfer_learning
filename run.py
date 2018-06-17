@@ -5,19 +5,22 @@ import numpy as np
 
 
 # Configuration
-EXTRACT_IMAGES = False
+EXTRACT_IMAGES = True
 TRAIN_NETWORK = True
 EVALUATE_NETWORK = True
 
 # Filepaths
 IMAGES_PATH_TRAIN = './data/images/train'
-FEATURE_VECTORS_PATH_TRAIN = './data/feature_vectors/train/feature_vectors.npz'
+FEATURE_VECTORS_PATH_TRAIN = './data/feature_vectors/train/feature_vectors' \
+                             '.pickle'
 
 IMAGES_PATH_VALID = './data/images/valid'
-FEATURE_VECTORS_PATH_VALID = './data/feature_vectors/valid/feature_vectors.npz'
+FEATURE_VECTORS_PATH_VALID = './data/feature_vectors/valid/feature_vectors' \
+                             '.pickle'
 
 IMAGES_PATH_TEST = './data/images/test'
-FEATURE_VECTORS_PATH_TEST = './data/feature_vectors/test/feature_vectors.npz'
+FEATURE_VECTORS_PATH_TEST = './data/feature_vectors/test/feature_vectors' \
+                            '.pickle'
 
 if EXTRACT_IMAGES:
 
