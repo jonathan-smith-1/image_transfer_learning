@@ -1,3 +1,8 @@
+"""
+Use transfer learning to convert images to feature vectors.  Train a
+neural network to classify the images and evaluate the network.
+"""
+
 from image_transfer_learning.network import Network
 from image_transfer_learning.image_processing import convert_images, \
     get_feature_vector_size, get_num_classes
@@ -11,45 +16,49 @@ EVALUATE_NETWORK = True
 EXAMPLE_PREDICTION = True
 
 # Filepaths
-IMAGES_PATH_TRAIN = './data/images/train'
-FEATURE_VECTORS_PATH_TRAIN = './data/feature_vectors/train/train_data.pickle'
+TRAIN_IMAGES_PATH = './data/images/train'
+TRAIN_FEATURES_PATH = './data/feature_vectors/train/train_data.pickle'
 
-IMAGES_PATH_VALID = './data/images/valid'
-FEATURE_VECTORS_PATH_VALID = './data/feature_vectors/valid/valid_data.pickle'
+VALID_IMAGES_PATH = './data/images/valid'
+VALID_FEATURES_PATH = './data/feature_vectors/valid/valid_data.pickle'
 
-IMAGES_PATH_TEST = './data/images/test'
-FEATURE_VECTORS_PATH_TEST = './data/feature_vectors/test/test_data.pickle'
+TEST_IMAGES_PATH = './data/images/test'
+TEST_FEATURES_PATH = './data/feature_vectors/test/test_data.pickle'
 
 if EXTRACT_IMAGES:
 
-    lab_to_int = convert_images(IMAGES_PATH_TRAIN, FEATURE_VECTORS_PATH_TRAIN)
-    convert_images(IMAGES_PATH_TEST, FEATURE_VECTORS_PATH_TEST, lab_to_int)
-    convert_images(IMAGES_PATH_VALID, FEATURE_VECTORS_PATH_VALID, lab_to_int)
+    label_to_int = convert_images(TRAIN_IMAGES_PATH, TRAIN_FEATURES_PATH)
+    convert_images(TEST_IMAGES_PATH, TEST_FEATURES_PATH, label_to_int)
+    convert_images(VALID_IMAGES_PATH, VALID_FEATURES_PATH, label_to_int)
 
 if TRAIN_NETWORK:
 
-    input_dimension = get_feature_vector_size(FEATURE_VECTORS_PATH_TRAIN)
-    num_classes = get_num_classes(FEATURE_VECTORS_PATH_TRAIN)
+    input_dimension = get_feature_vector_size(TRAIN_FEATURES_PATH)
+    num_classes = get_num_classes(TRAIN_FEATURES_PATH)
 
     net = Network(input_dimension, num_classes)
 
-    training_data = np.load(FEATURE_VECTORS_PATH_TRAIN)
-    val_data = np.load(FEATURE_VECTORS_PATH_VALID)
+    training_data = np.load(TRAIN_FEATURES_PATH)
+    val_data = np.load(VALID_FEATURES_PATH)
 
-    net.train(training_input=training_data['feature_vectors_array'],
-              training_labels=training_data['labels_array'],
-              validation_input=val_data['feature_vectors_array'],
-              validation_labels=val_data['labels_array'],
-              save_path="./tmp/model.ckpt")
+    train_data = {'input': training_data['feature_vectors_array'],
+                  'labels': training_data['labels_array']}
+
+    valid_data = {'input': val_data['feature_vectors_array'],
+                  'labels': val_data['labels_array']}
+
+    params = {'num_epochs': 2, 'learning_rate': 0.001, 'batch_size': 2}
+
+    net.train(train_data, valid_data, params, save_path="./tmp/model.ckpt")
 
 if EVALUATE_NETWORK:
 
-    input_dimension = get_feature_vector_size(FEATURE_VECTORS_PATH_TEST)
-    num_classes = get_num_classes(FEATURE_VECTORS_PATH_TEST)
+    input_dimension = get_feature_vector_size(TEST_FEATURES_PATH)
+    num_classes = get_num_classes(TEST_FEATURES_PATH)
 
     net = Network(input_dimension, num_classes)
 
-    test_data = np.load(FEATURE_VECTORS_PATH_TEST)
+    test_data = np.load(TEST_FEATURES_PATH)
 
     net.evaluate(test_input=test_data['feature_vectors_array'],
                  test_labels=test_data['labels_array'],
@@ -57,19 +66,23 @@ if EVALUATE_NETWORK:
 
 if EXAMPLE_PREDICTION:
 
-    # Example of using this network to make a prediction
-    input_dimension = get_feature_vector_size(FEATURE_VECTORS_PATH_TEST)
-    num_classes = get_num_classes(FEATURE_VECTORS_PATH_TEST)
+    # Example of using this network to make a prediction.
+    # Using the first two feature vectors from the test dataset
+
+    input_dimension = get_feature_vector_size(TEST_FEATURES_PATH)
+    num_classes = get_num_classes(TEST_FEATURES_PATH)
 
     net = Network(input_dimension, num_classes)
 
-    test_data = np.load(FEATURE_VECTORS_PATH_TEST)
+    test_data = np.load(TEST_FEATURES_PATH)
 
-    lab_to_int = test_data['lab_to_int']
-    int_to_lab = {v:k for k, v in lab_to_int.items()}
+    label_to_int = test_data['label_to_int']
+    int_to_label = {v: k for k, v in label_to_int.items()}
 
-    pred_input = test_data['feature_vectors_array'][0:2, :]  # first two
+    # Predict the labels of the first two feature vectors in the test data.
+    pred_input = test_data['feature_vectors_array'][0:2, :]
 
     prediction = net.predict(pred_input, restore_path="./tmp/model.ckpt")
 
-    print([int_to_lab[p] for p in prediction])
+    print('Predictions:')
+    print([int_to_label[p] for p in prediction])

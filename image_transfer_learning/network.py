@@ -1,15 +1,14 @@
+"""Neural network for image classification using transfer learning."""
+
 import tensorflow as tf
 import numpy as np
 
 
 class Network:
+    """Neural network for multi-class classification."""
 
     def __init__(self, in_dims, num_classes):
-
-        """
-        Build the neural network
-        """
-
+        """Build the computation graph."""
         tf.reset_default_graph()
         tf.set_random_seed(1234)
 
@@ -28,87 +27,146 @@ class Network:
 
         self.saver = tf.train.Saver()
 
-    def train(self, training_input, training_labels, num_epochs=2,
-              learning_rate=0.001, batch_size=2,
-              validation_input=None, validation_labels=None, save_path = "./tmp/model.ckpt"):
+    def train(self, train_data, valid_data, params,
+              save_path="./tmp/model.ckpt"):
+        """
+        Train the neural network and save the model.
 
+        If both validation input and labels are provided then the model's
+        accuracy is evaluated on the validation data at the end of every epoch.
+
+        Args:
+            train_input: 2D numpy array of floats giving the training input.
+                         Shape of array must be (data_points,
+                         feature_vector_length)
+
+            train_labels: 1D numpy array of ints giving the (enumerated)
+                          labels.  Length must match the number of rows of
+                          train_input.
+
+            num_epochs (int): Number of epochs to train.
+
+            learning_rate (float): Learning rate.
+
+            batch_size (int): Batch size for training.
+
+            valid_input: 2D numpy array of floats giving the validation
+                         input. Shape of array must be (data_points,
+                         feature_vector_length)
+
+            valid_labels: 1D numpy array of ints giving the (enumerated)
+                          labels.  Length must match the number of rows of
+                          train_input.
+
+            save_path: Filepath to save the model checkpoint to.
+
+        Returns:
+            Nothing.
+
+        """
         np.random.seed(42)
 
         with tf.Session() as sess:
 
             sess.run(tf.global_variables_initializer())
 
-            for epoch in range(num_epochs):
+            for epoch in range(params['num_epochs']):
 
                 print('Training epoch {}'.format(epoch))
 
-                shuffle_idx = np.arange(training_input.shape[0])
+                # Shuffle indices not data.
+                shuffle_idx = np.arange(train_data['input'].shape[0])
                 np.random.shuffle(shuffle_idx)
 
-                for idx in range(0, len(shuffle_idx), batch_size):
+                for idx in range(0, len(shuffle_idx), params['batch_size']):
 
-                    i = shuffle_idx[idx:idx+batch_size]
+                    i = shuffle_idx[idx:idx+params['batch_size']]
 
-                    feed_dict = {self.input: training_input[i, :],
-                                 self.labels: training_labels[i],
-                                 self.learning_rate: learning_rate}
+                    fd = {self.input: train_data['input'][i, :],
+                          self.labels: train_data['labels'][i],
+                          self.learning_rate: params['learning_rate']}
 
-                    _, loss = sess.run([self.opt, self.loss],
-                                        feed_dict=feed_dict)
+                    _, loss = sess.run([self.opt, self.loss], feed_dict=fd)
 
                     print('Loss: {:.2f}'.format(loss[0]))
 
-                if validation_input is not None and validation_labels is not None:
+                # Validation test
+                total_results = 0
+                total_correct = 0
 
-                    total_results = 0
-                    total_correct_results = 0
+                for i in range(0, valid_data['input'].shape[0],
+                               params['batch_size']):
 
-                    for i in range(0, validation_input.shape[0], batch_size):
+                    fd = {self.input:
+                          valid_data['input'][i:i+params['batch_size'], :]}
 
-                        feed_dict = {self.input: validation_input[i:i+batch_size, :]}
+                    out = sess.run(self.output, feed_dict=fd)
 
-                        out = sess.run(self.output, feed_dict=feed_dict)
+                    correct = np.equal(out, valid_data['labels'][i:i+params['batch_size']])
 
-                        correct_results = np.equal(out, validation_labels[i:i+batch_size])
+                    total_results += correct.size
+                    total_correct += np.sum(correct)
 
-                        total_results += correct_results.size
-                        total_correct_results += np.sum(correct_results)
-
-                    proportion_correct = total_correct_results/total_results
+                    proportion_correct = total_correct/total_results
 
                     print('Validation accuracy: {:.2f}%'.format(
                         proportion_correct*100))
 
             self.saver.save(sess, save_path)
+
             print("Model saved in path: %s" % save_path)
 
     def predict(self, feature_vectors, restore_path="./tmp/model.ckpt"):
-
         """
+        Predict the label of an input.
 
         Args:
-            feature_vectors: 2D numpy array, any number of rows
-            int_to_lab:
+            feature_vectors: 2D numpy array of feature vectors.  One row per
+                             input.  Feature vector length must be the same
+                             as the length used in the neural network's
+                             training.
+            restore_path: Path to model to restore.
 
-        Returns:
+
+        Returns: Integer corresponding to the prediction.
 
         """
-
         with tf.Session() as sess:
 
             self.saver.restore(sess, restore_path)
             print("Model restored from path: %s" % restore_path)
 
-            pred = sess.run(self.output, feed_dict={self.input:
-                                                        feature_vectors})
+            fd = {self.input: feature_vectors}
+            pred = sess.run(self.output, feed_dict=fd)
 
             return pred
 
     def evaluate(self, test_input, test_labels, batch_size=2,
                  restore_path="./tmp/model.ckpt"):
+        """
+        Evaluate the performance of the model on test data.
 
+        Args:
+            test_input: 2D numpy array of floats giving the training input.
+                        Shape of array must be (data_points,
+                        feature_vector_length)
+
+            test_labels: 1D numpy array of ints giving the (enumerated)
+                         labels.  Length must match the number of rows of
+                         train_input.
+
+            batch_size: Batch size for testing. Does not affect results,
+                        only speed.
+
+            restore_path: Filepath of checkpoint file from which to restore
+                          the model.
+
+        Returns:
+            Nothing.
+
+        """
         total_results = 0
-        total_correct_results = 0
+        total_correct = 0
 
         with tf.Session() as sess:
 
@@ -116,16 +174,14 @@ class Network:
             print("Model restored from path: %s" % restore_path)
 
             for i in range(0, test_input.shape[0], batch_size):
-                feed_dict = {self.input: test_input[i:i + batch_size, :]}
 
-                out = sess.run(self.output, feed_dict=feed_dict)
+                fd = {self.input: test_input[i:i + batch_size, :]}
+                out = sess.run(self.output, feed_dict=fd)
 
-                correct_results = np.equal(out, test_labels[i:i+batch_size])
+                correct = np.equal(out, test_labels[i:i+batch_size])
 
-                total_results += correct_results.size
-                total_correct_results += np.sum(correct_results)
+                total_results += correct.size
+                total_correct += np.sum(correct)
 
-            proportion_correct = total_correct_results / total_results
-
-            print('Test accuracy: {:.2f}%'.format(
-                proportion_correct * 100))
+            print('Test accuracy: {:.2f}%'.format(100 * total_correct /
+                                                  total_results))
