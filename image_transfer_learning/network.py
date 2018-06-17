@@ -10,7 +10,8 @@ class Network:
         Build the neural network
         """
 
-        # TODO - Figure out which graph
+        tf.reset_default_graph()
+
         self.input = tf.placeholder(tf.float32, shape=(None, in_dims))
         self.logits = tf.layers.dense(self.input, num_classes)
         self.output = tf.argmax(self.logits, axis=1)
@@ -104,8 +105,32 @@ class Network:
 
             return np.array([int_to_lab[i] for i in pred])
 
-    def save(self):
-        pass
 
-    def load(self):
-        pass
+    def evaluate(self, test_input, test_labels, batch_size=2):
+
+        test_results = []
+
+        with tf.Session() as sess:
+
+            restore_path = "./tmp/model.ckpt"
+            self.saver.restore(sess, restore_path)
+            print("Model restored from path: %s" % restore_path)
+
+            for i in range(0, test_input.shape[0], batch_size):
+                feed_dict = {self.input: test_input[i:i + batch_size, :],
+                             self.labels: test_labels[i:i + batch_size]}
+
+                out = sess.run(self.output, feed_dict=feed_dict)
+
+                test_results.append(out)
+                # TODO - Rework this into just the number correct
+
+            total_test_results = np.concatenate(test_results)
+
+            correct_results = np.equal(total_test_results, test_labels)
+
+            proportion_correct = np.sum(correct_results) / \
+                                 correct_results.size
+
+            print('Test accuracy: {:.2f}%'.format(
+                proportion_correct * 100))

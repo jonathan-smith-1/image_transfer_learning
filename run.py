@@ -6,7 +6,8 @@ import numpy as np
 
 # Configuration
 EXTRACT_IMAGES = False
-TRAIN_NETWORK = True
+TRAIN_NETWORK = False
+EVALUATE_NETWORK = True
 
 # Filepaths
 IMAGES_PATH_TRAIN = './data/images/train'
@@ -39,13 +40,18 @@ if TRAIN_NETWORK:
               validate=True, validation_input=val_data['feature_vectors_array'],
               validation_labels=val_data['labels_array'])
 
+if EVALUATE_NETWORK:
+    input_dimension = get_feature_vector_size(FEATURE_VECTORS_PATH_TRAIN)
+    num_classes = get_num_classes(FEATURE_VECTORS_PATH_TRAIN)
 
-test_data = np.load(FEATURE_VECTORS_PATH_TEST)
+    net = Network(input_dimension, num_classes)
 
-pred = net.predict(test_data['feature_vectors_array'][0, None], int_to_lab)
-print(pred)
+    test_data = np.load(FEATURE_VECTORS_PATH_TEST)
 
-#net.evaluate()
+    net.evaluate(test_data['feature_vectors_array'], test_data['labels_array'])
+
+
+# TODO - Add random seeds
 
 
 
