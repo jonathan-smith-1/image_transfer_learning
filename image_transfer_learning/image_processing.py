@@ -1,10 +1,10 @@
 """Image processing functions."""
 
 import os
+import pickle
+import numpy as np
 import tensorflow as tf
 import tensorflow_hub as hub
-import numpy as np
-import pickle
 from skimage.io import imread
 from skimage.transform import resize
 
@@ -21,19 +21,21 @@ def make_square(img):
         channels)
 
     """
-    height, width, channels = img.shape
+    height, width, _ = img.shape
 
     if height >= width:
         h_max = int(height/2 + width/2)
         h_min = int(height/2 - width/2)
 
-        return img[h_min:h_max, :, :].copy()
+        trimmed_image = img[h_min:h_max, :, :].copy()
 
     else:
         w_max = int(width/2 + height/2)
         w_min = int(width/2 - height/2)
 
-        return img[:, w_min:w_max, :].copy()
+        trimmed_image = img[:, w_min:w_max, :].copy()
+
+    return trimmed_image
 
 
 def convert_images(images_path, save_path, lab_to_int=None):
@@ -93,10 +95,10 @@ def convert_images(images_path, save_path, lab_to_int=None):
         mod = hub.Module("https://tfhub.dev/google/imagenet/inception_v3/"
                          "feature_vector/1")
         height, width = hub.get_expected_image_size(mod)
-        batch_size = 1
-        channels = 3
+
+        # [batch_size, height, width, channels]
         images = tf.placeholder(tf.float32,
-                                shape=[batch_size, height, width, channels],
+                                shape=[1, height, width, 3],
                                 name='Input_images')
 
         # Features have shape [batch_size, num_features].
@@ -133,8 +135,8 @@ def convert_images(images_path, save_path, lab_to_int=None):
                     'labels_array': labels_array,
                     'label_to_int': lab_to_int}
 
-            with open(save_path, 'wb') as f:
-                pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
+            with open(save_path, 'wb') as file:
+                pickle.dump(data, file, pickle.HIGHEST_PROTOCOL)
 
     return lab_to_int
 

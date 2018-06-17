@@ -36,27 +36,32 @@ class Network:
         accuracy is evaluated on the validation data at the end of every epoch.
 
         Args:
-            train_input: 2D numpy array of floats giving the training input.
-                         Shape of array must be (data_points,
-                         feature_vector_length)
+            train_data: Dictionary of training input and labels.  Must have
+                        form:
 
-            train_labels: 1D numpy array of ints giving the (enumerated)
-                          labels.  Length must match the number of rows of
-                          train_input.
+                        {'input': (2D numpy array of floats),
+                         'labels': (1D numpy array of ints)}
 
-            num_epochs (int): Number of epochs to train.
+                        The numpy array of inputs must have shape (
+                        data_points, feature_vector_length) that is the
+                        training input.
 
-            learning_rate (float): Learning rate.
+                        The numpy array of labels must have the
+                        same length as the number of rows of the
+                        inputs.
 
-            batch_size (int): Batch size for training.
+            valid_data: Dictionary of validation input and labels.  Must
+                        have same form as train_data.
 
-            valid_input: 2D numpy array of floats giving the validation
-                         input. Shape of array must be (data_points,
-                         feature_vector_length)
+            params: Dictionary of hyperparameters for the neural network
+                    training.  Must have the following form:
 
-            valid_labels: 1D numpy array of ints giving the (enumerated)
-                          labels.  Length must match the number of rows of
-                          train_input.
+                    {'num_epochs': (int),
+                     'learning_rate': (float),
+                     'batch_size': (int)}
+
+                    These values have their usual meaning in the
+                    context of training a neural network.
 
             save_path: Filepath to save the model checkpoint to.
 
@@ -82,39 +87,45 @@ class Network:
 
                     i = shuffle_idx[idx:idx+params['batch_size']]
 
-                    fd = {self.input: train_data['input'][i, :],
-                          self.labels: train_data['labels'][i],
-                          self.learning_rate: params['learning_rate']}
+                    feed = {self.input: train_data['input'][i, :],
+                            self.labels: train_data['labels'][i],
+                            self.learning_rate: params['learning_rate']}
 
-                    _, loss = sess.run([self.opt, self.loss], feed_dict=fd)
+                    _, loss = sess.run([self.opt, self.loss], feed_dict=feed)
 
                     print('Loss: {:.2f}'.format(loss[0]))
 
                 # Validation test
-                total_results = 0
-                total_correct = 0
+                percent_correct = self._validate(sess, valid_data, params)
 
-                for i in range(0, valid_data['input'].shape[0],
-                               params['batch_size']):
-
-                    fd = {self.input:
-                          valid_data['input'][i:i+params['batch_size'], :]}
-
-                    out = sess.run(self.output, feed_dict=fd)
-
-                    correct = np.equal(out, valid_data['labels'][i:i+params['batch_size']])
-
-                    total_results += correct.size
-                    total_correct += np.sum(correct)
-
-                    proportion_correct = total_correct/total_results
-
-                    print('Validation accuracy: {:.2f}%'.format(
-                        proportion_correct*100))
+                print('Validation accuracy: {:.2f}%'.format(percent_correct))
 
             self.saver.save(sess, save_path)
 
             print("Model saved in path: %s" % save_path)
+
+    def _validate(self, sess, valid_data, params):
+
+        total_results = 0
+        total_correct = 0
+
+        for i in range(0, valid_data['input'].shape[0],
+                       params['batch_size']):
+
+            feed = {self.input: valid_data['input'][i:i + params[
+                'batch_size'], :]}
+
+            out = sess.run(self.output, feed_dict=feed)
+
+            correct = np.equal(out,
+                               valid_data['labels'][i:i+params['batch_size']])
+
+            total_results += correct.size
+            total_correct += np.sum(correct)
+
+            percent_correct = 100 * total_correct / total_results
+
+            return percent_correct
 
     def predict(self, feature_vectors, restore_path="./tmp/model.ckpt"):
         """
@@ -136,8 +147,8 @@ class Network:
             self.saver.restore(sess, restore_path)
             print("Model restored from path: %s" % restore_path)
 
-            fd = {self.input: feature_vectors}
-            pred = sess.run(self.output, feed_dict=fd)
+            feed = {self.input: feature_vectors}
+            pred = sess.run(self.output, feed_dict=feed)
 
             return pred
 
@@ -175,8 +186,8 @@ class Network:
 
             for i in range(0, test_input.shape[0], batch_size):
 
-                fd = {self.input: test_input[i:i + batch_size, :]}
-                out = sess.run(self.output, feed_dict=fd)
+                feed = {self.input: test_input[i:i + batch_size, :]}
+                out = sess.run(self.output, feed_dict=feed)
 
                 correct = np.equal(out, test_labels[i:i+batch_size])
 
