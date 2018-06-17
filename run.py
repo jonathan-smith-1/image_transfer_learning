@@ -6,7 +6,7 @@ import numpy as np
 
 # Configuration
 EXTRACT_IMAGES = False
-TRAIN_NETWORK = False
+TRAIN_NETWORK = True
 EVALUATE_NETWORK = True
 
 # Filepaths
@@ -19,15 +19,14 @@ FEATURE_VECTORS_PATH_VALID = './data/feature_vectors/valid/feature_vectors.npz'
 IMAGES_PATH_TEST = './data/images/test'
 FEATURE_VECTORS_PATH_TEST = './data/feature_vectors/test/feature_vectors.npz'
 
-int_to_lab, lab_to_int = enumerate_labels(IMAGES_PATH_TRAIN)
-
 if EXTRACT_IMAGES:
 
-    convert_images(IMAGES_PATH_TRAIN, FEATURE_VECTORS_PATH_TRAIN, lab_to_int)
+    lab_to_int = convert_images(IMAGES_PATH_TRAIN, FEATURE_VECTORS_PATH_TRAIN)
     convert_images(IMAGES_PATH_TEST, FEATURE_VECTORS_PATH_TEST, lab_to_int)
     convert_images(IMAGES_PATH_VALID, FEATURE_VECTORS_PATH_VALID, lab_to_int)
 
 if TRAIN_NETWORK:
+
     input_dimension = get_feature_vector_size(FEATURE_VECTORS_PATH_TRAIN)
     num_classes = get_num_classes(FEATURE_VECTORS_PATH_TRAIN)
 
@@ -36,11 +35,14 @@ if TRAIN_NETWORK:
     training_data = np.load(FEATURE_VECTORS_PATH_TRAIN)
     val_data = np.load(FEATURE_VECTORS_PATH_VALID)
 
-    net.train(training_data['feature_vectors_array'], training_data['labels_array'],
-              validate=True, validation_input=val_data['feature_vectors_array'],
+    net.train(training_input=training_data['feature_vectors_array'],
+              training_labels=training_data['labels_array'],
+              validate=True,
+              validation_input=val_data['feature_vectors_array'],
               validation_labels=val_data['labels_array'])
 
 if EVALUATE_NETWORK:
+
     input_dimension = get_feature_vector_size(FEATURE_VECTORS_PATH_TRAIN)
     num_classes = get_num_classes(FEATURE_VECTORS_PATH_TRAIN)
 
@@ -48,13 +50,5 @@ if EVALUATE_NETWORK:
 
     test_data = np.load(FEATURE_VECTORS_PATH_TEST)
 
-    net.evaluate(test_data['feature_vectors_array'], test_data['labels_array'])
-
-
-# TODO - Add random seeds
-
-
-
-
-
-
+    net.evaluate(test_input=test_data['feature_vectors_array'],
+                 test_labels=test_data['labels_array'])

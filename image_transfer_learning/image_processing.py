@@ -32,7 +32,7 @@ def make_square(img):
         return img[:, w_min:w_max, :].copy()
 
 
-def convert_images(images_path, feature_vectors_path, lab_to_int):
+def convert_images(images_path, feature_vectors_path, lab_to_int=None):
     """
     Convert images into feature vectors.
 
@@ -54,6 +54,9 @@ def convert_images(images_path, feature_vectors_path, lab_to_int):
     # Convert the images to vectors and to a numpy array
     feature_vectors = []
     labels = []
+
+    if not lab_to_int:
+        int_to_lab, lab_to_int = enumerate_labels(images_path)
 
     with tf.Graph().as_default():
 
@@ -94,6 +97,8 @@ def convert_images(images_path, feature_vectors_path, lab_to_int):
             np.savez(feature_vectors_path,
                      feature_vectors_array=feature_vectors_array,
                      labels_array=labels_array)
+
+    return lab_to_int
 
 
 def get_feature_vector_size(feature_vector_path):

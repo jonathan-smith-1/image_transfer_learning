@@ -12,6 +12,8 @@ class Network:
 
         tf.reset_default_graph()
 
+        tf.set_random_seed(1234)
+
         self.input = tf.placeholder(tf.float32, shape=(None, in_dims))
         self.logits = tf.layers.dense(self.input, num_classes)
         self.output = tf.argmax(self.logits, axis=1)
@@ -27,9 +29,11 @@ class Network:
 
         self.saver = tf.train.Saver()
 
-    def train(self, input_, labels, num_epochs=10, learning_rate=0.001,
-              batch_size=2, validate=False, validation_input=None,
-              validation_labels=None):
+    def train(self, training_input, training_labels, num_epochs=2,
+              learning_rate=0.001, batch_size=2, validate=False,
+              validation_input=None, validation_labels=None):
+
+        np.random.seed(42)
 
         with tf.Session() as sess:
 
@@ -39,15 +43,15 @@ class Network:
 
                 print('Training epoch {}'.format(epoch))
 
-                shuffle_idx = np.arange(input_.shape[0])
+                shuffle_idx = np.arange(training_input.shape[0])
                 np.random.shuffle(shuffle_idx)
 
                 for idx in range(0, len(shuffle_idx), batch_size):
 
                     i = shuffle_idx[idx:idx+batch_size]
 
-                    feed_dict = {self.input: input_[i, :],
-                                 self.labels: labels[i],
+                    feed_dict = {self.input: training_input[i, :],
+                                 self.labels: training_labels[i],
                                  self.learning_rate: learning_rate}
 
                     _, loss = sess.run([self.opt, self.loss],
@@ -55,7 +59,8 @@ class Network:
 
                     print('Loss: {:.2f}'.format(loss[0]))
 
-                if validate:
+                if validate and validation_input is not None and \
+                        validation_labels is not None:
 
                     val_results = []
 
@@ -104,7 +109,6 @@ class Network:
                                                         feature_vectors})
 
             return np.array([int_to_lab[i] for i in pred])
-
 
     def evaluate(self, test_input, test_labels, batch_size=2):
 
