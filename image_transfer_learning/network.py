@@ -12,17 +12,19 @@ class Network:
 
         # TODO - Figure out which graph
         self.input = tf.placeholder(tf.float32, shape=(None, in_dims))
-        logits = tf.layers.dense(self.input, num_classes)
-        self.output = tf.argmax(logits)
+        self.logits = tf.layers.dense(self.input, num_classes)
+        self.output = tf.argmax(self.logits, axis=1)
 
         self.labels = tf.placeholder(tf.int32, shape=None)
 
         self.loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
-            labels=self.labels, logits=logits)
+            labels=self.labels, logits=self.logits)
 
         self.learning_rate = tf.placeholder(tf.float32)
         self.opt = tf.train.AdamOptimizer(
             learning_rate=self.learning_rate).minimize(self.loss)
+
+        self.saver = tf.train.Saver()
 
     def train(self, input_, labels, num_epochs=10, learning_rate=0.001,
               batch_size=2, verbose=True):
@@ -52,12 +54,16 @@ class Network:
 
                     print('Loss: {:.2f}'.format(loss[0]))
 
+            save_path = self.saver.save(sess, "./tmp/model.ckpt")
+            print("Model saved in path: %s" % save_path)
+
     def predict(self, feature_vectors, int_to_lab):
 
         """
 
         Args:
             feature_vectors: 2D numpy array, any number of rows
+            int_to_lab:
 
         Returns:
 
@@ -65,10 +71,13 @@ class Network:
 
         with tf.Session() as sess:
 
+            self.saver.restore(sess, "/tmp/model.ckpt")
+            print("Model restored.")
+
             pred = sess.run(self.output, feed_dict={self.input:
                                                         feature_vectors})
 
-            return int_to_lab[pred]
+            return np.array([int_to_lab[i] for i in pred])
 
     def save(self):
         pass
