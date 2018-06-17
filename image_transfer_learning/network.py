@@ -62,24 +62,21 @@ class Network:
                 if validate and validation_input is not None and \
                         validation_labels is not None:
 
-                    val_results = []
+                    total_results = 0
+                    total_correct_results = 0
 
                     for i in range(0, validation_input.shape[0], batch_size):
 
-                        feed_dict = {self.input: validation_input[i:i+batch_size, :],
-                                     self.labels: validation_labels[i:i+batch_size]}
+                        feed_dict = {self.input: validation_input[i:i+batch_size, :]}
 
                         out = sess.run(self.output, feed_dict=feed_dict)
 
-                        val_results.append(out)
-                        # TODO - Rework this into just the number correct
+                        correct_results = np.equal(out, validation_labels[i:i+batch_size])
 
-                    total_val_results = np.concatenate(val_results)
+                        total_results += correct_results.size
+                        total_correct_results += np.sum(correct_results)
 
-                    correct_results = np.equal(total_val_results, validation_labels)
-
-                    proportion_correct = np.sum(correct_results) / \
-                                         correct_results.size
+                    proportion_correct = total_correct_results/total_results
 
                     print('Validation accuracy: {:.2f}%'.format(
                         proportion_correct*100))
@@ -112,7 +109,8 @@ class Network:
 
     def evaluate(self, test_input, test_labels, batch_size=2):
 
-        test_results = []
+        total_results = 0
+        total_correct_results = 0
 
         with tf.Session() as sess:
 
@@ -121,20 +119,16 @@ class Network:
             print("Model restored from path: %s" % restore_path)
 
             for i in range(0, test_input.shape[0], batch_size):
-                feed_dict = {self.input: test_input[i:i + batch_size, :],
-                             self.labels: test_labels[i:i + batch_size]}
+                feed_dict = {self.input: test_input[i:i + batch_size, :]}
 
                 out = sess.run(self.output, feed_dict=feed_dict)
 
-                test_results.append(out)
-                # TODO - Rework this into just the number correct
+                correct_results = np.equal(out, test_labels[i:i+batch_size])
 
-            total_test_results = np.concatenate(test_results)
+                total_results += correct_results.size
+                total_correct_results += np.sum(correct_results)
 
-            correct_results = np.equal(total_test_results, test_labels)
-
-            proportion_correct = np.sum(correct_results) / \
-                                 correct_results.size
+            proportion_correct = total_correct_results / total_results
 
             print('Test accuracy: {:.2f}%'.format(
                 proportion_correct * 100))
