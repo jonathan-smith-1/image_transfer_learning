@@ -1,6 +1,6 @@
 from image_transfer_learning.network import Network
 from image_transfer_learning.image_processing import convert_images, \
-    get_feature_vector_size, get_num_classes, enumerate_labels
+    get_feature_vector_size, get_num_classes
 import numpy as np
 
 
@@ -46,8 +46,8 @@ if TRAIN_NETWORK:
 
 if EVALUATE_NETWORK:
 
-    input_dimension = get_feature_vector_size(FEATURE_VECTORS_PATH_TRAIN)
-    num_classes = get_num_classes(FEATURE_VECTORS_PATH_TRAIN)
+    input_dimension = get_feature_vector_size(FEATURE_VECTORS_PATH_TEST)
+    num_classes = get_num_classes(FEATURE_VECTORS_PATH_TEST)
 
     net = Network(input_dimension, num_classes)
 

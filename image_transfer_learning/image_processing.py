@@ -107,19 +107,14 @@ def convert_images(images_path, feature_vectors_path, lab_to_int=None):
 
 def get_feature_vector_size(feature_vector_path):
 
-    with open(feature_vector_path, 'rb') as f:
-        data = pickle.load(f)
-
+    data = np.load(feature_vector_path)
     return data['feature_vectors_array'].shape[1]
 
 
 def get_num_classes(feature_vector_path):
 
-    with open(feature_vector_path, 'rb') as f:
-        data = pickle.load(f)
-
-    unique_labels = np.unique(data['labels_array'])
-    return unique_labels.size
+    data = np.load(feature_vector_path)
+    return len(data['lab_to_int'])
 
 
 def enumerate_labels(images_path):
