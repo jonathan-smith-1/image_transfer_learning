@@ -27,7 +27,8 @@ class Network:
         self.saver = tf.train.Saver()
 
     def train(self, input_, labels, num_epochs=10, learning_rate=0.001,
-              batch_size=2, verbose=True):
+              batch_size=2, validate=False, validation_input=None,
+              validation_labels=None):
 
         with tf.Session() as sess:
 
@@ -35,8 +36,7 @@ class Network:
 
             for epoch in range(num_epochs):
 
-                if verbose:
-                    print('Training epoch {}'.format(epoch))
+                print('Training epoch {}'.format(epoch))
 
                 shuffle_idx = np.arange(input_.shape[0])
                 np.random.shuffle(shuffle_idx)
@@ -53,6 +53,30 @@ class Network:
                                         feed_dict=feed_dict)
 
                     print('Loss: {:.2f}'.format(loss[0]))
+
+                if validate:
+
+                    val_results = []
+
+                    for i in range(0, validation_input.shape[0], batch_size):
+
+                        feed_dict = {self.input: validation_input[i:i+batch_size, :],
+                                     self.labels: validation_labels[i:i+batch_size]}
+
+                        out = sess.run(self.output, feed_dict=feed_dict)
+
+                        val_results.append(out)
+                        # TODO - Rework this into just the number correct
+
+                    total_val_results = np.concatenate(val_results)
+
+                    correct_results = np.equal(total_val_results, validation_labels)
+
+                    proportion_correct = np.sum(correct_results) / \
+                                         correct_results.size
+
+                    print('Validation accuracy: {:.2f}%'.format(
+                        proportion_correct*100))
 
             save_path = self.saver.save(sess, "./tmp/model.ckpt")
             print("Model saved in path: %s" % save_path)
@@ -71,8 +95,9 @@ class Network:
 
         with tf.Session() as sess:
 
-            self.saver.restore(sess, "/tmp/model.ckpt")
-            print("Model restored.")
+            restore_path = "./tmp/model.ckpt"
+            self.saver.restore(sess, restore_path)
+            print("Model restored from path: %s" % restore_path)
 
             pred = sess.run(self.output, feed_dict={self.input:
                                                         feature_vectors})
