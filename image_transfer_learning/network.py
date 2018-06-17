@@ -11,17 +11,16 @@ class Network:
         """
 
         tf.reset_default_graph()
-
         tf.set_random_seed(1234)
 
         self.input = tf.placeholder(tf.float32, shape=(None, in_dims))
-        self.logits = tf.layers.dense(self.input, num_classes)
-        self.output = tf.argmax(self.logits, axis=1)
+        logits = tf.layers.dense(self.input, num_classes)
+        self.output = tf.argmax(logits, axis=1)
 
         self.labels = tf.placeholder(tf.int32, shape=None)
 
         self.loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
-            labels=self.labels, logits=self.logits)
+            labels=self.labels, logits=logits)
 
         self.learning_rate = tf.placeholder(tf.float32)
         self.opt = tf.train.AdamOptimizer(
@@ -30,8 +29,8 @@ class Network:
         self.saver = tf.train.Saver()
 
     def train(self, training_input, training_labels, num_epochs=2,
-              learning_rate=0.001, batch_size=2, validate=False,
-              validation_input=None, validation_labels=None):
+              learning_rate=0.001, batch_size=2,
+              validation_input=None, validation_labels=None, save_path = "./tmp/model.ckpt"):
 
         np.random.seed(42)
 
@@ -59,8 +58,7 @@ class Network:
 
                     print('Loss: {:.2f}'.format(loss[0]))
 
-                if validate and validation_input is not None and \
-                        validation_labels is not None:
+                if validation_input is not None and validation_labels is not None:
 
                     total_results = 0
                     total_correct_results = 0
@@ -81,10 +79,10 @@ class Network:
                     print('Validation accuracy: {:.2f}%'.format(
                         proportion_correct*100))
 
-            save_path = self.saver.save(sess, "./tmp/model.ckpt")
+            self.saver.save(sess, save_path)
             print("Model saved in path: %s" % save_path)
 
-    def predict(self, feature_vectors, int_to_lab):
+    def predict(self, feature_vectors, restore_path="./tmp/model.ckpt"):
 
         """
 
@@ -98,23 +96,22 @@ class Network:
 
         with tf.Session() as sess:
 
-            restore_path = "./tmp/model.ckpt"
             self.saver.restore(sess, restore_path)
             print("Model restored from path: %s" % restore_path)
 
             pred = sess.run(self.output, feed_dict={self.input:
                                                         feature_vectors})
 
-            return np.array([int_to_lab[i] for i in pred])
+            return pred
 
-    def evaluate(self, test_input, test_labels, batch_size=2):
+    def evaluate(self, test_input, test_labels, batch_size=2,
+                 restore_path="./tmp/model.ckpt"):
 
         total_results = 0
         total_correct_results = 0
 
         with tf.Session() as sess:
 
-            restore_path = "./tmp/model.ckpt"
             self.saver.restore(sess, restore_path)
             print("Model restored from path: %s" % restore_path)
 
