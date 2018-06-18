@@ -4,7 +4,9 @@ Perform multi-class classification of images using transfer learning and a simpl
 The aim of this project was to try out transfer learning using [Tensorflow Hub](https://www.tensorflow.org/hub/) on a
 complex task. The task I chose was multiclass classification between images of 133 different dog breeds.
 
-![alt text](https://upload.wikimedia.org/wikipedia/commons/6/69/Afghane.jpg)
+<p align="center">
+<img src="https://upload.wikimedia.org/wikipedia/commons/6/69/Afghane.jpg">
+</p>
 
 The rather extraordinary looking Afghan Hound, presumably one of the easier ones to classify!  Image thanks to 
 [Wikipedia Creative Commons CC BY-SA 3.0](https://commons.wikimedia.org/w/index.php?curid=512895)
