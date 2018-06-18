@@ -117,7 +117,9 @@ def convert_images(images_path, save_path, lab_to_int=None):
 
                 for image_path in os.scandir(category_dir):
                     print(image_path.name)
-                    image = imread(os.path.abspath(image_path))
+
+                    # img_num = 0 accounts for images with multiple frames
+                    image = imread(os.path.abspath(image_path), img_num=0)
                     image = make_square(image)
 
                     # Constant argument prevents deprecation warning
