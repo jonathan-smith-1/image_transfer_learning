@@ -47,7 +47,7 @@ if TRAIN_NETWORK:
     valid_data = {'input': val_data['feature_vectors_array'],
                   'labels': val_data['labels_array']}
 
-    params = {'num_epochs': 2, 'learning_rate': 0.001, 'batch_size': 2}
+    params = {'num_epochs': 1, 'learning_rate': 0.001, 'batch_size': 16}
 
     net.train(train_data, valid_data, params, save_path="./tmp/model.ckpt")
 
