@@ -7,6 +7,8 @@ import tensorflow as tf
 import tensorflow_hub as hub
 from skimage.io import imread
 from skimage.transform import resize
+from PIL import ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES = True  # Needed for large images
 
 
 def make_square(img):
