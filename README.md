@@ -21,12 +21,17 @@ dogs, spread unevenly across 133 classes. I first started working on this as a p
 Udacity's excellent [Deep Learning Nanodegree](https://www.udacity.com/course/deep-learning-nanodegree--nd101). Since
 finishing the course I have extended that work into what you see in this repository.
 
-For the transfer learning I used [Tensorflow Hub's](https://www.tensorflow.org/hub/) Inception V3 network to convert
-images to feature vectors.  There are loads of other options on Tensorflow Hub that would drop in too.
+For the transfer learning I used Tensorflow Hub's [Inception V3](https://www.tensorflow.org/hub/modules/google/imagenet/inception_v3/feature_vector/1) network to 
+convert
+images to feature vectors.  There are loads of other options on Tensorflow 
+Hub that easily drop in instead.
 
 The model itself is then a single linear layer (i.e. linear regression!), which produces 85% classification accuracy on
-the test data.  More complex models and careful tuning would surely outperform this.
-.
+the test data.  More complex models and careful tuning would surely 
+outperform this.  Using TensorFlow Hub's [Inception ResNet V2](https://www.tensorflow.org/hub/modules/google/imagenet/inception_resnet_v2/feature_vector/1) model instead 
+takes longer to process the images but achieves a slightly higher accuracy 
+of 86.1%,
+
 I feel that this  shows the remarkable power of transfer learning, which has the power to turn a complex task such as
 this into one that can be rapidly solved with linear regression.
 
