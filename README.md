@@ -30,7 +30,7 @@ The model itself is then a single linear layer (i.e. linear regression!), which 
 the test data.  More complex models and careful tuning would surely 
 outperform this.  Using TensorFlow Hub's [Inception ResNet V2](https://www.tensorflow.org/hub/modules/google/imagenet/inception_resnet_v2/feature_vector/1) model instead 
 takes longer to process the images but achieves a slightly higher accuracy 
-of 86.1%,
+of 86.1%.
 
 I feel that this  shows the remarkable power of transfer learning, which has the power to turn a complex task such as
 this into one that can be rapidly solved with linear regression.
