@@ -17,9 +17,11 @@ The code in `run.py` is divided into sections, each of which can be performed in
 - Evaluate the model on a withheld test dataset.
 
 The data I used was Udacity's dog dataset [download >1Gb](https://s3-us-west-1.amazonaws.com/udacity-aind/dog-project/dogImages.zip) containing 6680 training, 835 validation and 836 test images of
-dogs, spread unevenly across 133 classes. I first started working on this as a piece of coursework while I was taking
-Udacity's excellent [Deep Learning Nanodegree](https://www.udacity.com/course/deep-learning-nanodegree--nd101). Since
-finishing the course I have extended that work into what you see in this repository.
+dogs, spread unevenly across 133 classes. The original source of the data 
+seems to be the [Stanford Dogs Dataset](http://vision.stanford.edu/aditya86/ImageNetDogs/). I first started working on this as a piece of 
+coursework while I was taking Udacity's excellent [Deep Learning Nanodegree](https://www.udacity.com/course/deep-learning-nanodegree--nd101). Since 
+finishing the course I have extended that work into what you see in this 
+repository.
 
 For the transfer learning I used Tensorflow Hub's [Inception V3](https://www.tensorflow.org/hub/modules/google/imagenet/inception_v3/feature_vector/1) network to 
 convert
@@ -37,3 +39,6 @@ this into one that can be rapidly solved with linear regression.
 
 
 
+# Acknowledgements
+
+Many thanks to Danijar Hafner for his excellent [blog post](https://danijar.com/structuring-your-tensorflow-models/) which I followed for this work.
