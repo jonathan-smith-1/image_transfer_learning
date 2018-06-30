@@ -2,6 +2,26 @@
 
 import tensorflow as tf
 import numpy as np
+import functools
+
+
+def lazy_property(function):
+    """
+    Decorator to help structure graphs.
+
+    Taken from https://danijar.com/structuring-your-tensorflow-models/
+
+    """
+    attribute = '_cache_' + function.__name__
+
+    @property
+    @functools.wraps(function)
+    def decorator(self):
+        if not hasattr(self, attribute):
+            setattr(self, attribute, function(self))
+        return getattr(self, attribute)
+
+    return decorator
 
 
 class Network:
@@ -9,23 +29,48 @@ class Network:
 
     def __init__(self, in_dims, num_classes):
         """Build the computation graph."""
+
         tf.reset_default_graph()
         tf.set_random_seed(1234)
 
+        # Data
+        self.num_classes = num_classes
         self.input = tf.placeholder(tf.float32, shape=(None, in_dims))
-        logits = tf.layers.dense(self.input, num_classes)
-        self.output = tf.argmax(logits, axis=1)
-
         self.labels = tf.placeholder(tf.int32, shape=None)
 
-        self.loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
-            labels=self.labels, logits=logits)
-
+        # Hyperparameters
         self.learning_rate = tf.placeholder(tf.float32)
-        self.opt = tf.train.AdamOptimizer(
-            learning_rate=self.learning_rate).minimize(self.loss)
+
+        # Graph.  In __init__ method to force execution on when Network
+        # opject is instantiated.
+        self.logits
+        self.prediction
+        self.loss
+        self.opt
 
         self.saver = tf.train.Saver()
+
+    @lazy_property
+    def logits(self):
+
+        return tf.layers.dense(self.input, self.num_classes)
+
+    @lazy_property
+    def prediction(self):
+
+        return tf.argmax(self.logits, axis=1)
+
+    @lazy_property
+    def loss(self):
+
+        return tf.nn.sparse_softmax_cross_entropy_with_logits(
+            labels=self.labels,
+            logits=self.logits)
+
+    @lazy_property
+    def opt(self):
+        return tf.train.AdamOptimizer(learning_rate=self.learning_rate)\
+            .minimize(self.loss)
 
     def train(self, train_data, valid_data, params,
               save_path="./tmp/model.ckpt"):
@@ -115,7 +160,7 @@ class Network:
             feed = {self.input: valid_data['input'][i:i + params[
                 'batch_size'], :]}
 
-            out = sess.run(self.output, feed_dict=feed)
+            out = sess.run(self.prediction, feed_dict=feed)
 
             correct = np.equal(out,
                                valid_data['labels'][i:i+params['batch_size']])
@@ -148,7 +193,7 @@ class Network:
             print("Model restored from path: %s" % restore_path)
 
             feed = {self.input: feature_vectors}
-            pred = sess.run(self.output, feed_dict=feed)
+            pred = sess.run(self.prediction, feed_dict=feed)
 
             return pred
 
@@ -187,7 +232,7 @@ class Network:
             for i in range(0, test_input.shape[0], batch_size):
 
                 feed = {self.input: test_input[i:i + batch_size, :]}
-                out = sess.run(self.output, feed_dict=feed)
+                out = sess.run(self.prediction, feed_dict=feed)
 
                 correct = np.equal(out, test_labels[i:i+batch_size])
 
