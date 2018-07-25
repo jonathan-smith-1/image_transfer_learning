@@ -41,8 +41,8 @@ class Network:
         # Hyperparameters
         self.learning_rate = tf.placeholder(tf.float32)
 
-        # Graph.  In __init__ method to force execution on when Network
-        # opject is instantiated.
+        # Graph.  In __init__ method to force execution when Network
+        # object is instantiated.
         self.logits
         self.prediction
         self.loss
